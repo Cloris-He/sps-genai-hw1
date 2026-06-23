@@ -1,32 +1,36 @@
-from fastapi import FastAPI, HTTPException, Query
+﻿from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 
+from app.cifar10_model import CIFAR10Classifier
 from app.embedding_model import EmbeddingModel
 
 app = FastAPI(
-    title="spaCy Word Embedding API",
-    description="Generate word embeddings using spaCy's en_core_web_lg model.",
-    version="1.0.0",
+    title="SPS Generative AI API",
+    description="Generate word embeddings and classify CIFAR10 images.",
+    version="2.0.0",
 )
 
 embedding_model = EmbeddingModel()
+cifar10_classifier = CIFAR10Classifier()
 
 
 @app.get("/")
 def read_root() -> dict:
     """Return basic information about the API."""
     return {
-        "message": "Welcome to the spaCy Word Embedding API.",
+        "message": "Welcome to the SPS Generative AI API.",
         "docs": "/docs",
         "embedding_endpoint": "/embedding?word=apple",
+        "image_classification_endpoint": "/classify-image",
     }
 
 
 @app.get("/health")
 def health_check() -> dict:
-    """Confirm that the API server and embedding model are available."""
+    """Confirm that the API server and models are available."""
     return {
         "status": "healthy",
-        "model": "en_core_web_lg",
+        "embedding_model": "en_core_web_lg",
+        "cifar10_model_available": cifar10_classifier.model_available,
     }
 
 
@@ -37,5 +41,17 @@ def get_embedding(
     """Return the embedding vector for one query word."""
     try:
         return embedding_model.get_embedding(word)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@app.post("/classify-image")
+async def classify_image(file: UploadFile = File(...)) -> dict:
+    """Return the predicted CIFAR10 class for an uploaded image."""
+    try:
+        image_bytes = await file.read()
+        result = cifar10_classifier.predict(image_bytes)
+        result["filename"] = file.filename
+        return result
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error

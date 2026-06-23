@@ -7,7 +7,11 @@ requires-python = ">=3.12"
 dependencies = [
     "en-core-web-lg",
     "fastapi[standard]>=0.136.3",
+    "pillow>=12.2.0",
+    "python-multipart>=0.0.32",
     "spacy>=3.8.14",
+    "torch>=2.12.1",
+    "torchvision>=0.27.1",
 ]
 
 [tool.uv.sources]

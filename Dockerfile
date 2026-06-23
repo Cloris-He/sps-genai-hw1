@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm
+﻿FROM python:3.12-slim-bookworm
 
 # Install tools required to download uv
 RUN apt-get update \
@@ -19,6 +19,7 @@ RUN uv sync --frozen
 
 # Copy application code
 COPY ./app /code/app
+COPY ./models /code/models
 COPY main.py /code/
 
 # Run the FastAPI server inside the container

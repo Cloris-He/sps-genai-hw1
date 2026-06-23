@@ -1,98 +1,97 @@
-# spaCy Word Embedding API
+﻿# SPS Generative AI API - Assignment 2
 
-This project implements a FastAPI application that generates word embeddings using spaCy's `en_core_web_lg` model. It was developed for Assignment 1 of Applied Generative AI.
+This project extends the FastAPI and Docker application from Assignment 1 by adding a CIFAR10 image classifier implemented with PyTorch.
 
-## Features
+## What This Project Includes
 
-* Generate a 300-dimensional word embedding for a query word
-* Confirm whether spaCy has a vector for the word
-* Check API health status
-* Run locally with `uv`
-* Deploy with Docker
+- A spaCy word embedding endpoint from Assignment 1
+- A CIFAR10 image classification endpoint using a CNN
+- A PyTorch CNN model
+- A training script for CIFAR10
+- A trained model file
+- Docker support
+- Theory answers for CNN arithmetic questions
+
+## CNN Architecture
+
+The CNN follows the architecture required in Assignment 2:
+
+1. Input RGB image resized to 64 x 64 x 3
+2. Conv2D with 16 filters, kernel size 3 x 3, stride 1, padding 1
+3. ReLU activation
+4. MaxPooling2D with kernel size 2 x 2, stride 2
+5. Conv2D with 32 filters, kernel size 3 x 3, stride 1, padding 1
+6. ReLU activation
+7. MaxPooling2D with kernel size 2 x 2, stride 2
+8. Flatten
+9. Fully connected layer with 100 units
+10. ReLU activation
+11. Fully connected layer with 10 output units
+
+The CNN model is implemented in app/cifar10_model.py.
+
+## Training
+
+The training script is train_cifar10.py.
+
+To train the CIFAR10 model, run:
+
+uv run python train_cifar10.py
+
+The script downloads CIFAR10, trains the CNN for one epoch, evaluates the model on the test set, and saves the trained model to models/cifar10_cnn.pth.
+
+In my run, the model reached about 50% test accuracy after one epoch.
+
+## Run the API Locally
+
+Run:
+
+uv run fastapi run main.py --host 127.0.0.1 --port 8000
+
+Then open:
+
+http://127.0.0.1:8000/docs
 
 ## API Endpoints
 
-### Root endpoint
-
-```text
 GET /
-```
 
 Returns basic API information.
 
-### Health check
-
-```text
 GET /health
-```
 
-Returns the server and model status.
+Returns the API status and whether the CIFAR10 model is available.
 
-### Word embedding
-
-```text
 GET /embedding?word=apple
-```
+
+Returns the spaCy word embedding for the input word.
+
+POST /classify-image
+
+Accepts an uploaded image file and returns the predicted CIFAR10 class, predicted class index, confidence, and filename.
+
+Example command:
+
+curl.exe -X POST "http://127.0.0.1:8000/classify-image" -F "file=@sample_image.png"
 
 Example response:
 
-```json
-{
-  "word": "apple",
-  "dimension": 300,
-  "has_vector": true,
-  "embedding": [...]
-}
-```
+{"predicted_class":"cat","predicted_index":3,"confidence":0.5924044251441956,"filename":"sample_image.png"}
 
-## Run Locally
-
-Install the dependencies:
-
-```bash
-uv sync
-```
-
-Start the development server:
-
-```bash
-uv run fastapi dev main.py
-```
-
-Open the API documentation:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-## Run with Docker
+## Docker
 
 Build the Docker image:
 
-```bash
-docker build -t sps-genai .
-```
+docker build -t sps-genai-hw2 .
 
-Run the Docker container:
+Run the container:
 
-```bash
-docker run --rm -d -p 8000:80 --name sps-genai-container sps-genai
-```
+docker run -p 8000:80 sps-genai-hw2
 
-Open the API documentation:
+Then test the API at:
 
-```text
 http://127.0.0.1:8000/docs
-```
 
-Test the word embedding endpoint directly:
+## Theory Questions
 
-```text
-http://127.0.0.1:8000/embedding?word=apple
-```
-
-Stop the Docker container:
-
-```bash
-docker stop sps-genai-container
-```
+The answers to the CNN arithmetic and model.train() questions are in theory_answers.md.
