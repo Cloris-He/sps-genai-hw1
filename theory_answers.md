@@ -1,85 +1,166 @@
-﻿# Assignment 2 Theory Questions
+﻿# Assignment 3 Theory Answers
 
 ## Question 1
 
 Given:
-- Input image size: 32 x 32 x 3
-- Number of filters: 8
-- Filter size: 5 x 5
-- Stride: 1
-- Padding: 0
 
-The spatial output size is:
+- Input size: I = 8
+- Kernel size: K = 4
+- Stride: S = 2
+- Padding: P = 1
+- Output padding: OP = 1
 
-(32 - 5 + 2 * 0) / 1 + 1 = 28
+For a 2D transposed convolution, the output size is:
 
-Since there are 8 filters, the output depth is 8.
+O = (I - 1)S - 2P + K + OP
 
-Answer: 28 x 28 x 8
+Substitute the values:
+
+O = (8 - 1)(2) - 2(1) + 4 + 1
+
+O = 7(2) - 2 + 4 + 1
+
+O = 14 - 2 + 4 + 1
+
+O = 17
+
+Therefore, the output feature map size is 17 x 17.
 
 ## Question 2
 
-If padding is changed to "same", the spatial size stays the same when stride is 1.
+If the stride is increased from 2 to 3 while everything else stays fixed, the output size increases because the stride controls how far apart the transposed convolution places the expanded features.
 
-The input spatial size is 32 x 32, so the output spatial size is also 32 x 32.
+Using the same values from Question 1, but with S = 3:
 
-Since there are 8 filters, the output depth is 8.
+O = (I - 1)S - 2P + K + OP
 
-Answer: 32 x 32 x 8
+O = (8 - 1)(3) - 2(1) + 4 + 1
+
+O = 7(3) - 2 + 4 + 1
+
+O = 21 - 2 + 4 + 1
+
+O = 24
+
+So the output size changes from 17 x 17 to 24 x 24. In general, increasing the stride increases the output size because the feature map is upsampled more aggressively.
 
 ## Question 3
 
-Given:
-- Input size: 64 x 64
-- Filter size: 3 x 3
-- Stride: 2
-- Padding: 0
+The formula for the output size of a 2D transposed convolution is:
 
-The spatial output size is:
+O = (I - 1)S - 2P + K + OP
 
-floor((64 - 3 + 2 * 0) / 2) + 1
-= floor(61 / 2) + 1
-= 30 + 1
-= 31
+where:
 
-Answer: 31 x 31
+- I is the input size
+- K is the kernel size
+- S is the stride
+- P is the padding
+- OP is the output padding
+- O is the output size
+
+This formula is applied separately to height and width.
 
 ## Question 4
 
-Given:
-- Input feature map size: 16 x 16
-- Max-pooling size: 2 x 2
-- Stride: 2
+We want to upsample from 16 x 16 to 32 x 32, assuming no padding.
 
-The spatial output size is:
+Using:
 
-(16 - 2) / 2 + 1 = 8
+O = (I - 1)S - 2P + K + OP
 
-Answer: 8 x 8
+Since there is no padding, P = 0. One possible configuration is:
+
+- I = 16
+- S = 2
+- K = 2
+- P = 0
+- OP = 0
+
+Substitute:
+
+O = (16 - 1)(2) - 2(0) + 2 + 0
+
+O = 15(2) + 2
+
+O = 30 + 2
+
+O = 32
+
+Therefore, one possible configuration is kernel size 2 and stride 2 with no padding and no output padding.
 
 ## Question 5
 
-The input image has shape 128 x 128.
+Given the mini-batch:
 
-Both convolutional layers use:
-- Kernel size: 3 x 3
-- Stride: 1
-- Same padding
+[6, 8, 10, 6]
 
-With same padding and stride 1, the spatial size stays the same after each convolutional layer.
+First compute the mean:
 
-After the first convolutional layer: 128 x 128
+mean = (6 + 8 + 10 + 6) / 4
 
-After the second convolutional layer: 128 x 128
+mean = 30 / 4
 
-Answer: 128 x 128
+mean = 7.5
+
+Next compute the variance using the batch variance:
+
+variance = ((6 - 7.5)^2 + (8 - 7.5)^2 + (10 - 7.5)^2 + (6 - 7.5)^2) / 4
+
+variance = ((-1.5)^2 + (0.5)^2 + (2.5)^2 + (-1.5)^2) / 4
+
+variance = (2.25 + 0.25 + 6.25 + 2.25) / 4
+
+variance = 11 / 4
+
+variance = 2.75
+
+The standard deviation is:
+
+std = sqrt(2.75)
+
+std ≈ 1.6583
+
+Now normalize each value:
+
+(6 - 7.5) / 1.6583 ≈ -0.9045
+
+(8 - 7.5) / 1.6583 ≈ 0.3015
+
+(10 - 7.5) / 1.6583 ≈ 1.5076
+
+(6 - 7.5) / 1.6583 ≈ -0.9045
+
+Therefore, the normalized output is approximately:
+
+[-0.9045, 0.3015, 1.5076, -0.9045]
 
 ## Question 6
 
-The command model.train() sets the model to training mode before the training loop.
+The key mathematical difference between ReLU and LeakyReLU is how they handle negative inputs.
 
-If this line is removed, the effect depends on the model. For a simple CNN without dropout or batch normalization, there may be little or no visible difference because a new PyTorch model is usually already in training mode by default.
+For ReLU:
 
-However, in general, model.train() is important because layers such as dropout and batch normalization behave differently during training and evaluation. Removing model.train() could cause the model to remain in evaluation mode if model.eval() was called earlier, which would make training behave incorrectly.
+f(x) = max(0, x)
 
-Answer: model.train() ensures the model is in training mode. Removing it may not affect this simple CNN much, but it can cause incorrect behavior for models with dropout, batch normalization, or models that were previously set to evaluation mode.
+Equivalently:
+
+f(x) = x, if x >= 0
+
+f(x) = 0, if x < 0
+
+For LeakyReLU:
+
+f(x) = x, if x >= 0
+
+f(x) = alpha x, if x < 0
+
+where alpha is a small positive slope. In this assignment, the discriminator uses LeakyReLU(0.2), so alpha = 0.2.
+
+ReLU sets all negative inputs to 0, while LeakyReLU keeps a small nonzero slope for negative inputs.
+
+## Question 7
+
+LeakyReLU may be preferred over ReLU in deep networks because it helps avoid the dying ReLU problem. With standard ReLU, if a neuron receives negative inputs for a long time, its output becomes 0 and its gradient can also become 0, so the neuron may stop learning.
+
+LeakyReLU still allows a small gradient when the input is negative. This makes it easier for the network to keep updating weights during training. In GANs, this is especially useful for the discriminator because it helps maintain more stable learning when distinguishing real and fake samples.

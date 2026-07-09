@@ -2,15 +2,17 @@
 
 from app.cifar10_model import CIFAR10Classifier
 from app.embedding_model import EmbeddingModel
+from app.gan_model import MNISTGANGenerator
 
 app = FastAPI(
     title="SPS Generative AI API",
-    description="Generate word embeddings and classify CIFAR10 images.",
-    version="2.0.0",
+    description="Generate word embeddings, classify CIFAR10 images, and generate MNIST digits with a GAN.",
+    version="3.0.0",
 )
 
 embedding_model = EmbeddingModel()
 cifar10_classifier = CIFAR10Classifier()
+mnist_gan_generator = MNISTGANGenerator()
 
 
 @app.get("/")
@@ -21,6 +23,7 @@ def read_root() -> dict:
         "docs": "/docs",
         "embedding_endpoint": "/embedding?word=apple",
         "image_classification_endpoint": "/classify-image",
+        "mnist_gan_endpoint": "/generate-mnist?num_images=1",
     }
 
 
@@ -31,6 +34,7 @@ def health_check() -> dict:
         "status": "healthy",
         "embedding_model": "en_core_web_lg",
         "cifar10_model_available": cifar10_classifier.model_available,
+        "mnist_gan_model_available": mnist_gan_generator.model_available,
     }
 
 
@@ -53,5 +57,21 @@ async def classify_image(file: UploadFile = File(...)) -> dict:
         result = cifar10_classifier.predict(image_bytes)
         result["filename"] = file.filename
         return result
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@app.get("/generate-mnist")
+def generate_mnist(
+    num_images: int = Query(
+        1,
+        ge=1,
+        le=16,
+        description="Number of MNIST-like digit images to generate.",
+    ),
+) -> dict:
+    """Generate MNIST-like handwritten digit images using the trained GAN generator."""
+    try:
+        return mnist_gan_generator.generate(num_images=num_images)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
