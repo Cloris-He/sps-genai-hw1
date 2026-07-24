@@ -6,13 +6,13 @@ Let the embedding dimension be `d`, let `h = d/2`, and let the maximum period be
 
 For each frequency index:
 
-\[
+$$
 i = 0, 1, \ldots, h-1
-\]
+$$
 
 the frequency is:
 
-\[
+$$
 f_i
 =
 \exp\left(
@@ -20,22 +20,22 @@ f_i
 \right)
 =
 P^{-i/h}
-\]
+$$
 
 A common diffusion-model convention places all cosine values first and all sine values second:
 
-\[
+$$
 \text{Embedding}(t)
 =
 [
 \cos(tf_0), \ldots, \cos(tf_{h-1}),
 \sin(tf_0), \ldots, \sin(tf_{h-1})
 ]
-\]
+$$
 
 Therefore, the i-th dimension can be written as:
 
-\[
+$$
 \text{Embedding}_i(t)
 =
 \begin{cases}
@@ -45,7 +45,7 @@ Therefore, the i-th dimension can be written as:
 \sin\left(tP^{-(i-h)/h}\right),
 & h \leq i < d
 \end{cases}
-\]
+$$
 
 Some Transformer implementations interleave the sine and cosine dimensions instead. The frequencies and values are the same, but their order in the vector is different.
 
@@ -53,37 +53,37 @@ Some Transformer implementations interleave the sine and cosine dimensions inste
 
 The embedding dimension is:
 
-\[
+$$
 d = 8
-\]
+$$
 
 Therefore:
 
-\[
+$$
 h = \frac{d}{2} = 4
-\]
+$$
 
 For `t = 1` and maximum period `P = 10000`, the four frequencies are:
 
-\[
+$$
 f_0 = 10000^0 = 1
-\]
+$$
 
-\[
+$$
 f_1 = 10000^{-1/4} = 0.1
-\]
+$$
 
-\[
+$$
 f_2 = 10000^{-2/4} = 0.01
-\]
+$$
 
-\[
+$$
 f_3 = 10000^{-3/4} = 0.001
-\]
+$$
 
 Using the diffusion-model convention, the embedding vector is:
 
-\[
+$$
 [
 \cos(1),
 \cos(0.1),
@@ -94,11 +94,11 @@ Using the diffusion-model convention, the embedding vector is:
 \sin(0.01),
 \sin(0.001)
 ]
-\]
+$$
 
 The approximate numerical values are:
 
-\[
+$$
 [
 0.540302,
 0.995004,
@@ -109,7 +109,7 @@ The approximate numerical values are:
 0.010000,
 0.001000
 ]
-\]
+$$
 ## Question 3
 
 Positional encoding in Transformers and sinusoidal time embedding in diffusion models use the same general idea: they transform a scalar position or timestep into a fixed-dimensional vector containing sine and cosine values at several frequencies.
@@ -124,7 +124,7 @@ The key difference is that Transformer positional encoding represents token posi
 
 Each stride-2 downsampling block divides both spatial dimensions by 2.
 
-\[
+$$
 64 \times 64
 \rightarrow
 32 \times 32
@@ -132,36 +132,36 @@ Each stride-2 downsampling block divides both spatial dimensions by 2.
 16 \times 16
 \rightarrow
 8 \times 8
-\]
+$$
 
 Therefore, the spatial resolution at the bottleneck is:
 
-\[
+$$
 8 \times 8
-\]
+$$
 
 ## Question 5
 
-The UNet receives the noisy image \(x_t\) and the timestep \(t\). It outputs an estimate of the Gaussian noise that was added to the original image:
+The UNet receives the noisy image $x_t$ and the timestep $t$. It outputs an estimate of the Gaussian noise that was added to the original image:
 
-\[
+$$
 \epsilon_\theta(x_t, t)
-\]
+$$
 
 The output has the same shape as the input image.
 
-During training, a noise tensor \(\epsilon\) is sampled and used to create the noisy image \(x_t\). The model prediction is then compared with the actual sampled noise.
+During training, a noise tensor $\epsilon$ is sampled and used to create the noisy image $x_t$. The model prediction is then compared with the actual sampled noise.
 
 The loss can be written as:
 
-\[
+$$
 L
 =
 \left\|
 \epsilon -
 \epsilon_\theta(x_t,t)
 \right\|
-\]
+$$
 
 The course implementation uses `L1Loss`, so it minimizes the mean absolute difference between the actual noise and the predicted noise. The loss is backpropagated to update the UNet parameters.
 
@@ -171,21 +171,21 @@ The course implementation uses `L1Loss`, so it minimizes the mean absolute diffe
 
 The function is:
 
-\[
+$$
 y = x^2 + 3x
-\]
+$$
 
 Its derivative is:
 
-\[
+$$
 \frac{dy}{dx} = 2x + 3
-\]
+$$
 
-At \(x = 2\):
+At $x = 2$:
 
-\[
+$$
 \frac{dy}{dx} = 2(2) + 3 = 7
-\]
+$$
 
 Therefore, the output is:
 
@@ -247,19 +247,19 @@ print("w.grad =", w.grad)
 
 Since:
 
-\[
+$$
 y = w_0x^2 + w_1x
-\]
+$$
 
 the gradients with respect to the weights are:
 
-\[
+$$
 \frac{\partial y}{\partial w_0} = x^2 = 4
-\]
+$$
 
-\[
+$$
 \frac{\partial y}{\partial w_1} = x = 2
-\]
+$$
 
 The output is:
 
@@ -300,9 +300,9 @@ print("x.grad =", x.grad)
 
 The derivative is:
 
-\[
+$$
 \frac{dw}{dx} = 3 \times 2 = 6
-\]
+$$
 
 The output is:
 
@@ -328,9 +328,9 @@ After second backward: x.grad = tensor([5.])
 
 PyTorch accumulates gradients in `.grad` instead of replacing the existing value. The second gradient is `3`, so it is added to the first gradient of `2`:
 
-\[
+$$
 2 + 3 = 5
-\]
+$$
 
 To avoid unwanted gradient accumulation, clear the gradient before the next backward call:
 
