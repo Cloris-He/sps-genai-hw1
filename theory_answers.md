@@ -1,166 +1,371 @@
-﻿# Assignment 3 Theory Answers
+# Assignment 4 Theory Answers
 
 ## Question 1
 
-Given:
+Let the embedding dimension be `d`, let `h = d/2`, and let the maximum period be `P`.
 
-- Input size: I = 8
-- Kernel size: K = 4
-- Stride: S = 2
-- Padding: P = 1
-- Output padding: OP = 1
+For each frequency index:
 
-For a 2D transposed convolution, the output size is:
+\[
+i = 0, 1, \ldots, h-1
+\]
 
-O = (I - 1)S - 2P + K + OP
+the frequency is:
 
-Substitute the values:
+\[
+f_i
+=
+\exp\left(
+-\frac{\log(P)i}{h}
+\right)
+=
+P^{-i/h}
+\]
 
-O = (8 - 1)(2) - 2(1) + 4 + 1
+A common diffusion-model convention places all cosine values first and all sine values second:
 
-O = 7(2) - 2 + 4 + 1
+\[
+\text{Embedding}(t)
+=
+[
+\cos(tf_0), \ldots, \cos(tf_{h-1}),
+\sin(tf_0), \ldots, \sin(tf_{h-1})
+]
+\]
 
-O = 14 - 2 + 4 + 1
+Therefore, the i-th dimension can be written as:
 
-O = 17
+\[
+\text{Embedding}_i(t)
+=
+\begin{cases}
+\cos\left(tP^{-i/h}\right),
+& 0 \leq i < h
+\\
+\sin\left(tP^{-(i-h)/h}\right),
+& h \leq i < d
+\end{cases}
+\]
 
-Therefore, the output feature map size is 17 x 17.
+Some Transformer implementations interleave the sine and cosine dimensions instead. The frequencies and values are the same, but their order in the vector is different.
 
 ## Question 2
 
-If the stride is increased from 2 to 3 while everything else stays fixed, the output size increases because the stride controls how far apart the transposed convolution places the expanded features.
+The embedding dimension is:
 
-Using the same values from Question 1, but with S = 3:
+\[
+d = 8
+\]
 
-O = (I - 1)S - 2P + K + OP
+Therefore:
 
-O = (8 - 1)(3) - 2(1) + 4 + 1
+\[
+h = \frac{d}{2} = 4
+\]
 
-O = 7(3) - 2 + 4 + 1
+For `t = 1` and maximum period `P = 10000`, the four frequencies are:
 
-O = 21 - 2 + 4 + 1
+\[
+f_0 = 10000^0 = 1
+\]
 
-O = 24
+\[
+f_1 = 10000^{-1/4} = 0.1
+\]
 
-So the output size changes from 17 x 17 to 24 x 24. In general, increasing the stride increases the output size because the feature map is upsampled more aggressively.
+\[
+f_2 = 10000^{-2/4} = 0.01
+\]
 
+\[
+f_3 = 10000^{-3/4} = 0.001
+\]
+
+Using the diffusion-model convention, the embedding vector is:
+
+\[
+[
+\cos(1),
+\cos(0.1),
+\cos(0.01),
+\cos(0.001),
+\sin(1),
+\sin(0.1),
+\sin(0.01),
+\sin(0.001)
+]
+\]
+
+The approximate numerical values are:
+
+\[
+[
+0.540302,
+0.995004,
+0.999950,
+0.9999995,
+0.841471,
+0.099833,
+0.010000,
+0.001000
+]
+\]
 ## Question 3
 
-The formula for the output size of a 2D transposed convolution is:
+Positional encoding in Transformers and sinusoidal time embedding in diffusion models use the same general idea: they transform a scalar position or timestep into a fixed-dimensional vector containing sine and cosine values at several frequencies.
 
-O = (I - 1)S - 2P + K + OP
+In a Transformer, positional encoding represents the location of each token in a sequence. It is usually added to the token embedding so the model can use token order while processing the tokens in parallel.
 
-where:
+In a diffusion model, the sinusoidal embedding represents the current diffusion timestep or noise level. It is supplied to the denoising network so the network knows how much noise is present and which stage of denoising it should perform.
 
-- I is the input size
-- K is the kernel size
-- S is the stride
-- P is the padding
-- OP is the output padding
-- O is the output size
-
-This formula is applied separately to height and width.
+The key difference is that Transformer positional encoding represents token position, while diffusion time embedding represents the noise or denoising stage of an image.
 
 ## Question 4
 
-We want to upsample from 16 x 16 to 32 x 32, assuming no padding.
+Each stride-2 downsampling block divides both spatial dimensions by 2.
 
-Using:
+\[
+64 \times 64
+\rightarrow
+32 \times 32
+\rightarrow
+16 \times 16
+\rightarrow
+8 \times 8
+\]
 
-O = (I - 1)S - 2P + K + OP
+Therefore, the spatial resolution at the bottleneck is:
 
-Since there is no padding, P = 0. One possible configuration is:
-
-- I = 16
-- S = 2
-- K = 2
-- P = 0
-- OP = 0
-
-Substitute:
-
-O = (16 - 1)(2) - 2(0) + 2 + 0
-
-O = 15(2) + 2
-
-O = 30 + 2
-
-O = 32
-
-Therefore, one possible configuration is kernel size 2 and stride 2 with no padding and no output padding.
+\[
+8 \times 8
+\]
 
 ## Question 5
 
-Given the mini-batch:
+The UNet receives the noisy image \(x_t\) and the timestep \(t\). It outputs an estimate of the Gaussian noise that was added to the original image:
 
-[6, 8, 10, 6]
+\[
+\epsilon_\theta(x_t, t)
+\]
 
-First compute the mean:
+The output has the same shape as the input image.
 
-mean = (6 + 8 + 10 + 6) / 4
+During training, a noise tensor \(\epsilon\) is sampled and used to create the noisy image \(x_t\). The model prediction is then compared with the actual sampled noise.
 
-mean = 30 / 4
+The loss can be written as:
 
-mean = 7.5
+\[
+L
+=
+\left\|
+\epsilon -
+\epsilon_\theta(x_t,t)
+\right\|
+\]
 
-Next compute the variance using the batch variance:
+The course implementation uses `L1Loss`, so it minimizes the mean absolute difference between the actual noise and the predicted noise. The loss is backpropagated to update the UNet parameters.
 
-variance = ((6 - 7.5)^2 + (8 - 7.5)^2 + (10 - 7.5)^2 + (6 - 7.5)^2) / 4
+## Question 6: Basic Gradient Calculations
 
-variance = ((-1.5)^2 + (0.5)^2 + (2.5)^2 + (-1.5)^2) / 4
+### a)
 
-variance = (2.25 + 0.25 + 6.25 + 2.25) / 4
+The function is:
 
-variance = 11 / 4
+\[
+y = x^2 + 3x
+\]
 
-variance = 2.75
+Its derivative is:
 
-The standard deviation is:
+\[
+\frac{dy}{dx} = 2x + 3
+\]
 
-std = sqrt(2.75)
+At \(x = 2\):
 
-std ≈ 1.6583
+\[
+\frac{dy}{dx} = 2(2) + 3 = 7
+\]
 
-Now normalize each value:
+Therefore, the output is:
 
-(6 - 7.5) / 1.6583 ≈ -0.9045
+```text
+x.grad = tensor([7.])
+```
 
-(8 - 7.5) / 1.6583 ≈ 0.3015
+### b)
 
-(10 - 7.5) / 1.6583 ≈ 1.5076
+If `requires_grad=False`, PyTorch does not construct a computational graph for operations involving `x`.
 
-(6 - 7.5) / 1.6583 ≈ -0.9045
+Calling:
 
-Therefore, the normalized output is approximately:
+```python
+y.backward()
+```
 
-[-0.9045, 0.3015, 1.5076, -0.9045]
+raises an error because `y` does not require gradients and does not have a gradient function. Therefore, `x.grad` is not calculated.
 
-## Question 6
+### c)
 
-The key mathematical difference between ReLU and LeakyReLU is how they handle negative inputs.
+No. When `torch.tensor()` is used without specifying `requires_grad`, the default value is `False`. Gradients are not tracked unless `requires_grad=True` is explicitly provided.
 
-For ReLU:
+## Question 7: Introduce Weights
 
-f(x) = max(0, x)
+### a)
 
-Equivalently:
+After adding:
 
-f(x) = x, if x >= 0
+```python
+print("w.grad =", w.grad)
+```
 
-f(x) = 0, if x < 0
+the result is:
 
-For LeakyReLU:
+```text
+w.grad = None
+```
 
-f(x) = x, if x >= 0
+This happens because `w` was created without `requires_grad=True`. PyTorch therefore does not track the operations with respect to `w`.
 
-f(x) = alpha x, if x < 0
+### b)
 
-where alpha is a small positive slope. In this assignment, the discriminator uses LeakyReLU(0.2), so alpha = 0.2.
+The code can be modified as follows:
 
-ReLU sets all negative inputs to 0, while LeakyReLU keeps a small nonzero slope for negative inputs.
+```python
+import torch
 
-## Question 7
+x = torch.tensor([2.0], requires_grad=True)
+w = torch.tensor([1.0, 3.0], requires_grad=True)
 
-LeakyReLU may be preferred over ReLU in deep networks because it helps avoid the dying ReLU problem. With standard ReLU, if a neuron receives negative inputs for a long time, its output becomes 0 and its gradient can also become 0, so the neuron may stop learning.
+y = w[0] * x**2 + w[1] * x
 
-LeakyReLU still allows a small gradient when the input is negative. This makes it easier for the network to keep updating weights during training. In GANs, this is especially useful for the discriminator because it helps maintain more stable learning when distinguishing real and fake samples.
+y.backward()
+
+print("x.grad =", x.grad)
+print("w.grad =", w.grad)
+```
+
+Since:
+
+\[
+y = w_0x^2 + w_1x
+\]
+
+the gradients with respect to the weights are:
+
+\[
+\frac{\partial y}{\partial w_0} = x^2 = 4
+\]
+
+\[
+\frac{\partial y}{\partial w_1} = x = 2
+\]
+
+The output is:
+
+```text
+x.grad = tensor([7.])
+w.grad = tensor([4., 2.])
+```
+
+### c)
+
+No. The default value of `requires_grad` for `torch.tensor()` is `False`, so gradients are not tracked unless it is explicitly set to `True`.
+
+## Question 8: Breaking the Graph
+
+The code fails because:
+
+```python
+z = y.detach()
+```
+
+removes `z` from the computational graph. The later value `w` therefore does not require gradients and has no path back to `x`. Calling `w.backward()` raises an error.
+
+To keep using `z` while allowing gradients to flow back to `x`, use `clone()` without `detach()`:
+
+```python
+import torch
+
+x = torch.tensor([1.0], requires_grad=True)
+
+y = x * 3
+z = y.clone()
+w = z * 2
+
+w.backward()
+
+print("x.grad =", x.grad)
+```
+
+The derivative is:
+
+\[
+\frac{dw}{dx} = 3 \times 2 = 6
+\]
+
+The output is:
+
+```text
+x.grad = tensor([6.])
+```
+
+Using `z = y` would also preserve the computational graph.
+
+## Question 9: Gradient Accumulation
+
+After the first backward call:
+
+```text
+After first backward: x.grad = tensor([2.])
+```
+
+After the second backward call:
+
+```text
+After second backward: x.grad = tensor([5.])
+```
+
+PyTorch accumulates gradients in `.grad` instead of replacing the existing value. The second gradient is `3`, so it is added to the first gradient of `2`:
+
+\[
+2 + 3 = 5
+\]
+
+To avoid unwanted gradient accumulation, clear the gradient before the next backward call:
+
+```python
+x.grad.zero_()
+```
+
+For example:
+
+```python
+import torch
+
+x = torch.tensor([1.0], requires_grad=True)
+
+y1 = x * 2
+y1.backward()
+print("After first backward: x.grad =", x.grad)
+
+x.grad.zero_()
+
+y2 = x * 3
+y2.backward()
+print("After second backward: x.grad =", x.grad)
+```
+
+The second output is now:
+
+```text
+After second backward: x.grad = tensor([3.])
+```
+
+When training a neural network, the usual approach is to call:
+
+```python
+optimizer.zero_grad()
+```
+
+before each new backward pass.
