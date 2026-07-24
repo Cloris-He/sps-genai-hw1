@@ -2,97 +2,71 @@
 
 ## Question 1
 
-Let the embedding dimension be `d`, let `h = d/2`, and let the maximum period be `P`.
-
-For each frequency index:
+Let the embedding dimension be `d`, let the maximum period be `P`, and let the dimension index be:
 
 ```math
-i = 0, 1, \ldots, h-1
+i = 0, 1, \ldots, d-1
 ```
 
-the frequency is:
+Using the sinusoidal convention from the course slide, the i-th dimension is:
 
 ```math
-f_i
-=
-\exp\left(
--\frac{\log(P)i}{h}
-\right)
-=
-P^{-i/h}
-```
-
-A common diffusion-model convention places all cosine values first and all sine values second:
-
-```math
-\text{Embedding}(t)
-=
-[
-\cos(tf_0), \ldots, \cos(tf_{h-1}),
-\sin(tf_0), \ldots, \sin(tf_{h-1})
-]
-```
-
-Therefore, the i-th dimension can be written as:
-
-```math
-\text{Embedding}_i(t)
+\text{Embedding}(t,i)
 =
 \begin{cases}
-\cos\left(tP^{-i/h}\right),
-& 0 \leq i < h
+\sin\left(\dfrac{t}{P^{i/d}}\right),
+& \text{if } i \text{ is even}
 \\
-\sin\left(tP^{-(i-h)/h}\right),
-& h \leq i < d
+\cos\left(\dfrac{t}{P^{(i-1)/d}}\right),
+& \text{if } i \text{ is odd}
 \end{cases}
 ```
 
-Some Transformer implementations interleave the sine and cosine dimensions instead. The frequencies and values are the same, but their order in the vector is different.
+Equivalently, for each pair of dimensions indexed by `k`:
+
+```math
+\text{Embedding}(t,2k)
+=
+\sin\left(\dfrac{t}{P^{2k/d}}\right)
+```
+
+```math
+\text{Embedding}(t,2k+1)
+=
+\cos\left(\dfrac{t}{P^{2k/d}}\right)
+```
+
+The different dimensions use different frequencies, allowing the model to represent the timestep at multiple scales.
 
 ## Question 2
 
-The embedding dimension is:
+For:
 
 ```math
-d = 8
+d = 8,\qquad t = 1,\qquad P = 10000
 ```
 
-Therefore:
+the four arguments shared by the sine/cosine pairs are:
 
 ```math
-h = \frac{d}{2} = 4
+1,\qquad
+\frac{1}{10000^{2/8}} = 0.1,\qquad
+\frac{1}{10000^{4/8}} = 0.01,\qquad
+\frac{1}{10000^{6/8}} = 0.001
 ```
 
-For `t = 1` and maximum period `P = 10000`, the four frequencies are:
-
-```math
-f_0 = 10000^0 = 1
-```
-
-```math
-f_1 = 10000^{-1/4} = 0.1
-```
-
-```math
-f_2 = 10000^{-2/4} = 0.01
-```
-
-```math
-f_3 = 10000^{-3/4} = 0.001
-```
-
-Using the diffusion-model convention, the embedding vector is:
+Therefore, the sinusoidal embedding vector is:
 
 ```math
 [
-\cos(1),
-\cos(0.1),
-\cos(0.01),
-\cos(0.001),
 \sin(1),
+\cos(1),
 \sin(0.1),
+\cos(0.1),
 \sin(0.01),
-\sin(0.001)
+\cos(0.01),
+\sin(0.001),
+\cos(0.001)
 ]
 ```
 
@@ -100,16 +74,17 @@ The approximate numerical values are:
 
 ```math
 [
-0.540302,
-0.995004,
-0.999950,
-0.9999995,
 0.841471,
+0.540302,
 0.099833,
+0.995004,
 0.010000,
-0.001000
+0.999950,
+0.001000,
+0.9999995
 ]
 ```
+
 ## Question 3
 
 Positional encoding in Transformers and sinusoidal time embedding in diffusion models use the same general idea: they transform a scalar position or timestep into a fixed-dimensional vector containing sine and cosine values at several frequencies.
